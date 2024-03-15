@@ -26,6 +26,7 @@ class Player(pg.sprite.Sprite):
         self.speed = 300
         self.status = ''
         self.hitpoints = 100
+        self.health_bar_length = TILESIZE
     
     def get_keys(self):
         self.vx, self.vy = 0, 0
@@ -81,6 +82,11 @@ class Player(pg.sprite.Sprite):
             hits = pg.sprite.spritecollide(self, group, kill)
             # code for collisions
             if hits:
+                for hit in hits:
+                    if isinstance(hit, Wall):
+                        self.hitpoints -= 10
+
+                        
                 if str(hits[0].__class__.__name__) == "Coin":
                     self.moneybag += 1
                 if str(hits[0].__class__.__name__) == "Powerup":
@@ -101,7 +107,7 @@ class Player(pg.sprite.Sprite):
                     self.hitpoints -= 1
                     self.speed = 150
                     if(self.status == 'Invincible'):
-                        print("you cant hurt me")
+                        print("haha")
     
     # sprite updates
     def update(self):
@@ -239,3 +245,6 @@ class Mob(pg.sprite.Sprite):
             # self.collide_with_walls('x')
             # self.rect.y = self.y
             # self.collide_with_walls('y')
+ 
+
+
