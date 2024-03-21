@@ -14,13 +14,7 @@ import sys
 from os import path
 import random
 
-ranmap = random.randint(0, 1)
-mapfile = ''
-if (ranmap == 0):
-    mapfile = 'map.txt'
-
-if (ranmap == 1):
-    mapfile = 'map2.txt'
+mapfile = 'map.txt'
 
 # Define game class...
 class Game:
@@ -38,16 +32,7 @@ class Game:
     def load_data(self):
         game_folder = path.dirname(__file__)
         self.map_data = []
-        # 'r'     open for reading (default)
-        # 'w'     open for writing, truncating the file first
-        # 'x'     open for exclusive creation, failing if the file already exists
-        # 'a'     open for writing, appending to the end of the file if it exists
-        # 'b'     binary mode
-        # 't'     text mode (default)
-        # '+'     open a disk file for updating (reading and writing)
-        # 'U'     universal newlines mode (deprecated)
-        # below opens file for reading in text mode
-        # with 
+       
         '''
         The with statement is a context manager in Python. 
         It is used to ensure that a resource is properly closed or released 
@@ -66,11 +51,7 @@ class Game:
         self.coins = pg.sprite.Group()
         self.mobs = pg.sprite.Group()
         self.power_ups = pg.sprite.Group()
-        # self.power_ups1 = pg.sprite.Group()
-        # self.player1 = Player(self, 1, 1)
-        # for x in range(10, 20):
-        #     Wall(self, x, 5)
-        # code to add walls and render player
+       
         for row, tiles in enumerate(self.map_data):
             # print(row)
             for col, tile in enumerate(tiles):
@@ -123,6 +104,10 @@ class Game:
             self.screen.fill(BGCOLOR)
             self.draw_grid()
             self.all_sprites.draw(self.screen)
+            # Draw health bar for each player
+            for player in self.all_sprites:
+                if isinstance(player, Player):
+                    player.draw_health_bar()
             pg.display.flip()
 
     # function to handle detected events in the game
@@ -141,20 +126,7 @@ class Game:
                     self.vx = PLAYER_SPEED
                     self.vy = PLAYER_SPEED
                     self.player1.image.fill(GREEN)
-            #     if event.key == pg.K_d:
-            #         self.player1.move(dx=+1)
-            #     if event.key == pg.K_w:
-            #         self.player1.move(dy=-1)
-            #     if event.key == pg.K_s:
-            #         self.player1.move(dy=+1)
-            #     if event.key == pg.K_LEFT:
-            #         self.player1.move(dx=-1)
-            #     if event.key == pg.K_RIGHT:
-            #         self.player1.move(dx=+1)
-            #     if event.key == pg.K_UP:
-            #         self.player1.move(dy=-1)
-            #     if event.key == pg.K_DOWN:
-            #         self.player1.move(dy=+1)
+            
 
 # Instantiate the game... 
 g = Game()
@@ -163,4 +135,4 @@ g = Game()
 while True:
     g.new()
     g.run()
-    # g.show_go_screen()
+    # g.show_go_screen()                                                  
