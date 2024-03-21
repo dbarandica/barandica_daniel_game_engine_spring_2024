@@ -8,12 +8,11 @@ from utils import *
 
 # player sprite
 
-mobcamo = False
+mobdisguise = False
 
 class Player(pg.sprite.Sprite):
     def __init__(self, game, x, y):
         self.groups = game.all_sprites
-        # init super class
         pg.sprite.Sprite.__init__(self, self.groups)
         self.game = game
         self.image = pg.Surface((TILESIZE, TILESIZE))
@@ -24,9 +23,8 @@ class Player(pg.sprite.Sprite):
         self.y = y * TILESIZE
         self.moneybag = 0
         self.speed = 300
-        self.status = ''
         self.hitpoints = 100
-        self.health_bar_length = TILESIZE
+        self.life_count = 3
     
     def get_keys(self):
         self.vx, self.vy = 0, 0
@@ -43,18 +41,7 @@ class Player(pg.sprite.Sprite):
             self.vx *= 0.7071
             self.vy *= 0.7071
 
-    # def move(self, dx=0, dy=0):
-    #     if not self.collide_with_walls(dx, dy):
-    #         self.x += dx
-    #         self.y += dy
-
-    # def collide_with_walls(self, dx=0, dy=0):
-    #     for wall in self.game.walls:
-    #         if wall.x == self.x + dx and wall.y == self.y + dy:
-    #             return True
-    #     return False
             
-    # wall collision code
     def collide_with_walls(self, dir):
         if dir == 'x':
             hits = pg.sprite.spritecollide(self, self.game.walls, False)
@@ -75,57 +62,57 @@ class Player(pg.sprite.Sprite):
                 self.vy = 0
                 self.rect.y = self.y
 
-    # made possible by Aayush's question!
-    # collision code
+    
     def collide_with_group(self, group, kill):
-            global mobcamo
+            global mobdisguise
             hits = pg.sprite.spritecollide(self, group, kill)
-            # code for collisions
             if hits:
                 for hit in hits:
-                    if isinstance(hit, Wall):
-                        self.hitpoints -= 10
-
+                    if isinstance(hit, Mob):
+                        self.life_count -= 1
+                        if self.life_count <= 0: 
+                            self.game_over()
+                        else:
+                            self.reset_position()
                         
-                if str(hits[0].__class__.__name__) == "Coin":
-                    self.moneybag += 1
-                if str(hits[0].__class__.__name__) == "Powerup":
-                    print(hits[0].__class__.__name__)
-                    if(choice(POWER_UP_EFFECTS) == "Speed"):
-                        self.speed *= 3.5
-                        print("speed")
-                    if(choice(POWER_UP_EFFECTS) == "Camo"):
-                        # self.game.cooldown.cd = 5
-                        mobcamo = True
-                        print("camo")
-                        self.image.fill(RED)
-                        # if self.game.cooldown.cd < 1:
-                        #     mobcamo = False
-                        #     self.image.fill(GREEN)
-                if str(hits[0].__class__.__name__) == "Mob":
-                    print(hits[0].__class__.__name__)
-                    self.hitpoints -= 1
-                    self.speed = 150
-                    if(self.status == 'Invincible'):
-                        print("haha")
+                    if str(hit.__class__.__name__) == "Coin":
+                        self.moneybag += 1
+                    if str(hit.__class__.__name__) == "Powerup":
+                        if(choice(POWER_UP_EFFECTS) == "Speed"):
+                            self.speed *= 5
+                    if str(hit.__class__.__name__) == "Powerup":
+                        if(choice(POWER_UP_EFFECTS) == "Disguise"):
+                            mobdisguise = True
+                            self.image.fill(RED)
+                    if str(hit.__class__.__name__) == "Mob":
+                        self.hitpoints -= 1
+                        self.speed = 150
     
-    # sprite updates
     def update(self):
         self.get_keys()
         self.x += self.vx * self.game.dt
         self.y += self.vy * self.game.dt
         self.rect.x = self.x
-        # add collsion later
         self.collide_with_walls('x')
         self.rect.y = self.y
-        # add collision later
         self.collide_with_walls('y')
         self.collide_with_group(self.game.coins, True)
         self.collide_with_group(self.game.power_ups, True)
-
-        coin_hits = pg.sprite.spritecollide(self, self.game.coins, True)
-        if coin_hits:
-            self.moneybag += 1
+        
+    def draw_health_bar(self):
+        font = pg.font.Font(None, 36)
+        text = font.render("Lives: " + str(self.life_count), True, (0, 255, 0))
+        self.game.screen.blit(text, (100, 100))
+        
+    def game_over(self):
+        self.game.screen.fill((0, 0, 0))
+        font = pg.font.Font(None, 48)
+        text = font.render("Game Over", True, (255, 0, 0))
+        text_rect = text.get_rect(center=(self.game.screen.get_width() / 2, self.game.screen.get_height() / 2))
+        self.game.screen.blit(text, text_rect)
+        pg.display.flip()
+        pg.time.delay(3000)
+        self.game.quit()  
 
 class Wall(pg.sprite.Sprite):
     def __init__(self, game, x, y):
@@ -166,20 +153,6 @@ class Powerup(pg.sprite.Sprite):
         self.rect.x = x * TILESIZE
         self.rect.y = y * TILESIZE
 
-# class Powerup1(pg.sprite.Sprite):
-#     def __init__(self, game, x, y):
-#         self.groups = game.all_sprites, game.power_ups
-#         pg.sprite.Sprite.__init__(self, self.groups)
-#         self.game = game
-#         self.image = pg.Surface((TILESIZE, TILESIZE))
-#         self.image.fill(ORANGE)
-#         self.rect = self.image.get_rect()
-#         self.x = x
-#         self.y = y
-#         self.rect.x = x * TILESIZE
-#         self.rect.y = y * TILESIZE
-
-# Mob code from Mr. Cozort's code
         
 class Mob(pg.sprite.Sprite):
     def __init__(self, game, x, y):
@@ -195,22 +168,21 @@ class Mob(pg.sprite.Sprite):
         self.x = x * TILESIZE
         self.y = y * TILESIZE
         self.speed = 1
+    
     def collide_with_walls(self, dir):
         if dir == 'x':
-            # print('colliding on the x')
             hits = pg.sprite.spritecollide(self, self.game.walls, False)
             if hits:
                 self.vx *= -1
                 self.rect.x = self.x
         if dir == 'y':
-            # print('colliding on the y')
             hits = pg.sprite.spritecollide(self, self.game.walls, False)
             if hits:
                 self.vy *= -1
                 self.rect.y = self.y
+    
     def update(self):
-        if mobcamo == False:
-            # self.rect.x += 1
+        if mobdisguise == False:
             self.x += self.vx * self.game.dt
             self.y += self.vy * self.game.dt
             
@@ -226,25 +198,5 @@ class Mob(pg.sprite.Sprite):
             self.collide_with_walls('x')
             self.rect.y = self.y
             self.collide_with_walls('y')
-        elif mobcamo == True:
-            # if self.game.cooldown.cd < 1:
-            pass
-            # if self.game.cooldown.cd < 1:
-            #                 self.x += self.vx * self.game.dt
-            # self.y += self.vy * self.game.dt
-            
-            # if self.rect.x < self.game.player1.rect.x:
-            #     self.vx = 100
-            # if self.rect.x > self.game.player1.rect.x:
-            #     self.vx = -100    
-            # if self.rect.y < self.game.player1.rect.y:
-            #     self.vy = 100
-            # if self.rect.y > self.game.player1.rect.y:
-            #     self.vy = -100
-            # self.rect.x = self.x
-            # self.collide_with_walls('x')
-            # self.rect.y = self.y
-            # self.collide_with_walls('y')
- 
-
-
+        elif mobdisguise == True:
+            pass  # Adjust behavior for mobdisguise=True if needed
